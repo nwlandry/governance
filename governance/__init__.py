@@ -1,3 +1,6 @@
-from .governance import *
+import functions
+
+import governance
+
 from .functions import *
-import functions, governance
+from .governance import *
