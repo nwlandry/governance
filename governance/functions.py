@@ -16,7 +16,7 @@ def select_decision(decisions, past_decisions, decision_matrix, opinions, how="r
         A symmetric matrix with -1, 0, and 1 elements.
         -1  indicates a contradictory relationship between decisions,
         0 indicates no relationship between decisions, and
-        1 indicates a positive relationship between decisions
+        1 indicates a positive relationship between decisions.
     opinions : 2D numpy array
         An array where the row indicates the decision maker, and
         the column indicates the decision. The $ij$th entry is between -1 and 1.
@@ -31,8 +31,8 @@ def select_decision(decisions, past_decisions, decision_matrix, opinions, how="r
 
     Returns
     -------
-    _type_
-        _description_
+    int
+        the decision to be made
     """
     unmade_decisions = list(set(decisions).difference(set(past_decisions)))
 
@@ -58,8 +58,41 @@ def select_decision(decisions, past_decisions, decision_matrix, opinions, how="r
         )
 
 
-def select_group(num_people, start, stop):
-    return random.sample(range(num_people), random.randrange(start, stop))
+def select_group(policy_makers, decision, decision_matrix, opinions, H, how="random", **args):
+    """The algorithm for choosing the policy makers to decide on the
+    selected decision.
+
+    Parameters
+    ----------
+    policy_makers : list
+        The list of all possible policy makers
+    decision : int
+        The specific decision selected on which to decide.
+    decision_matrix : 2D numpy array
+        A symmetric matrix with -1, 0, and 1 elements.
+        -1  indicates a contradictory relationship between decisions,
+        0 indicates no relationship between decisions, and
+        1 indicates a positive relationship between decisions.        
+    opinions : 2D numpy array
+        An array where the row indicates the decision maker, and
+        the column indicates the decision. The $ij$th entry is between -1 and 1.
+        It indicates the opinion of decision-maker $i$ about decision $j$;
+        -1 is fully against and 1 is fully for the decision.
+    H : xgi.Hypergraph
+        A hypergraph tabulating all the past decision makers and decisions.
+    how : str, default: "random"
+        The method for choosing the policy makers for the selected decision. Options are
+        - "random"
+        - "sentiment"
+        - "degree"
+
+    Returns
+    -------
+    set
+        the policy makers to decide on the selected decision.
+    """
+    if "random":
+        return random.sample(policy_makers, random.randrange(start, stop))
 
 
 def update_opinions(opinions, decision_group, decision):
