@@ -1,6 +1,4 @@
-import functions
-
-import governance
+from . import functions, governance
 
 from .functions import *
 from .governance import *
