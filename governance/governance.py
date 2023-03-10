@@ -109,18 +109,16 @@ def select_decision(
     # the population of decision makers feels.
     elif how == "sentiment":
         xavg = np.mean(np.abs(opinions), axis=0)
+        xavg = xavg[unmade_decisions] / np.sum(xavg[unmade_decisions])
 
-        return random.choice(
-            unmade_decisions, size=None, replace=True, p=xavg[unmade_decisions]
-        )
+        return np.random.choice(unmade_decisions, size=None, replace=True, p=xavg)
 
     # This randomly selects the decision proportional to the number of decisions
     # (positive or negative) to which it's connected.
     elif how == "degree":
-        d = np.sum(np.abs(decision_matrix))
-        return random.choice(
-            unmade_decisions, size=None, replace=True, p=d[unmade_decisions]
-        )
+        d = np.sum(np.abs(decision_matrix), axis=0)
+        d = d[unmade_decisions] / np.sum(d[unmade_decisions])
+        return np.random.choice(unmade_decisions, size=None, replace=True, p=d)
     else:
         raise Exception("Invalid decision type!")
 
