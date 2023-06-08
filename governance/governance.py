@@ -10,7 +10,7 @@ def decision_process(
     decision_matrix,
     group_size,
     group_overlap,
-    select_decision_type="random",
+    select_decision_type="snowball",
     select_group_type="star",
     make_decision_type="star",
     update_opinions_type="star",
@@ -35,7 +35,7 @@ def decision_process(
     groups = xgi.Hypergraph()
     while len(completed_decisions) < m:
         # Select the decision to make
-        d = select_decision(
+        cd = select_decision(
             decisions,
             completed_decisions,
             decision_matrix,
@@ -48,23 +48,24 @@ def decision_process(
             nodes,
             group_size,
             group_overlap,
-            d,
+            cd,
             decision_matrix,
             opinions,
             groups,
             how=select_group_type,
         )
 
-        groups.add_edge(g, id=d)  # add the group to the list of all decision groups
+        groups.add_edge(g, id=cd)  # add the group to the list of all decision groups
 
         # Make the decision
-        completed_decisions[d] = make_decision(
-            d, g, decision_matrix, opinions, how=make_decision_type
+        completed_decisions[cd] = make_decision(
+            cd, g, decision_matrix, opinions, how=make_decision_type
         )
+        d = completed_decisions[cd]
 
         # Update the group's opinions after the decision has been made.
         opinions = update_opinions(
-            opinions, g, d, decision_matrix, how=update_opinions_type
+            opinions, g, d, cd, decision_matrix, how=update_opinions_type
         )
 
     return completed_decisions, opinions, groups
@@ -123,6 +124,13 @@ def select_decision(
         d = np.sum(np.abs(decision_matrix), axis=0)
         d = d[unmade_decisions] / np.sum(d[unmade_decisions])
         return np.random.choice(unmade_decisions, size=None, replace=True, p=d)
+
+    elif how == "snowball":
+        pool = set()
+        for dec in completed_decisions:
+            neigh_dec = set(np.where(decision_matrix[dec]!=0)[0])
+            pool.update(neigh_dec)
+
     else:
         raise Exception("Invalid decision type!")
 
@@ -180,9 +188,10 @@ def select_group(
         g2 = random.sample(list(nodes), num_old_nodes)
         return set(g1).union(g2)
     elif how == "star":
-        neigh_dec = list(np.where(decision_matrix[decision]!=0))
+        neigh_dec = np.where(decision_matrix[decision]!=0)[0].tolist()
+        edges = neigh_dec & groups.edges
         nodes = set()
-        for group in groups.edges(neigh_dec).members():
+        for group in groups.edges(edges).members():
             nodes.update(group)
         n = np.size(opinions, axis=0)
         # assuming new_nodes is always a big enough population
