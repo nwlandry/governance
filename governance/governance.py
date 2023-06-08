@@ -11,9 +11,9 @@ def decision_process(
     group_size,
     group_overlap,
     select_decision_type="random",
-    select_group_type="random",
-    make_decision_type="average",
-    update_opinions_type="average",
+    select_group_type="star",
+    make_decision_type="star",
+    update_opinions_type="star",
 ):
 
     m = np.size(decision_matrix, axis=0)
@@ -128,15 +128,7 @@ def select_decision(
 
 
 def select_group(
-    nodes,
-    size,
-    overlap,
-    decision,
-    decision_matrix,
-    opinions,
-    groups,
-    how="random",
-    **args
+    nodes, size, overlap, decision, decision_matrix, opinions, groups, how="star", **args
 ):
     """The algorithm for choosing the policy makers to decide on the
     selected decision.
@@ -174,15 +166,29 @@ def select_group(
     set
         the policy makers to decide on the selected decision.
     """
-    n = np.size(opinions, axis=0)
-    nodes = set(groups.nodes)
-    new_nodes = set(range(n)).difference(nodes)
-    if "random":
+    if how == "random":
+        nodes = groups.nodes
+        n = np.size(opinions, axis=0)
+        new_nodes = set(range(n)).difference(nodes)
         # non-overlapping nodes: I had to take care of edge cases
         # (1) where there are no policy makers to begin with and
         # (2) where no policy makers have been absent from all decisions
-        num_new_nodes = min(size - overlap, len(new_nodes))
         num_old_nodes = min(overlap, len(nodes))
+        # assuming new_nodes is always a big enough population
+        num_new_nodes = min(size - num_old_nodes, len(new_nodes))
+        g1 = random.sample(list(new_nodes), num_new_nodes)
+        g2 = random.sample(list(nodes), num_old_nodes)
+        return set(g1).union(g2)
+    elif how == "star":
+        neigh_dec = list(np.where(decision_matrix[decision]!=0))
+        nodes = set()
+        for group in groups.edges(neigh_dec).members():
+            nodes.update(group)
+        n = np.size(opinions, axis=0)
+        # assuming new_nodes is always a big enough population
+        new_nodes = set(range(n)).difference(nodes)
+        num_old_nodes = min(overlap, len(nodes))
+        num_new_nodes = min(size - num_old_nodes, len(new_nodes))
         g1 = random.sample(list(new_nodes), num_new_nodes)
         g2 = random.sample(list(nodes), num_old_nodes)
         return set(g1).union(g2)
@@ -227,8 +233,9 @@ def update_opinions(opinions, decision_group, d, cd, decision_matrix, how="avera
     if how == "average":
         opinions[g, :] = np.mean(opinions[g, :])
     elif how == "star":
-
-        opinions[g, :] = np.mean(opinions[g, :])
+        ds = decision_matrix[cd] * d
+        idx = np.where(ds!=0)
+        opinions[g,idx] = ds[idx]
     else:
         raise Exception("Invalid opinion update type!")
     return opinions
