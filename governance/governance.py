@@ -7,7 +7,7 @@ import xgi
 # optional parameters, which go in each group. Minimal number of parameters
 def decision_process(
     opinions,
-    decision_network,
+    decision_matrix,
     group_size,
     group_overlap,
     select_decision_type="random",
@@ -16,11 +16,11 @@ def decision_process(
     update_opinions_type="average",
 ):
 
-    m = np.size(decision_network, axis=0)
+    m = np.size(decision_matrix, axis=0)
 
     o = opinions.copy()
 
-    if np.size(decision_network, 0) != np.size(decision_network, 1):
+    if np.size(decision_matrix, 0) != np.size(decision_matrix, 1):
         raise Exception("Decision matrix must be square!")
 
     if np.size(o, axis=1) != m:
@@ -36,7 +36,7 @@ def decision_process(
     while len(completed_decisions) < m:
         # Select the decision to make
         d = select_decision(
-            decisions, completed_decisions, decision_network, o, how=select_decision_type
+            decisions, completed_decisions, decision_matrix, o, how=select_decision_type
         )
 
         # Select the group to make that decision
@@ -45,7 +45,7 @@ def decision_process(
             group_size,
             group_overlap,
             d,
-            decision_network,
+            decision_matrix,
             o,
             groups,
             how=select_group_type,
@@ -57,17 +57,17 @@ def decision_process(
 
         # Make the decision
         completed_decisions[d] = make_decision(
-            d, g, decision_network, o, completed_decisions, how=make_decision_type
+            d, g, decision_matrix, o, completed_decisions, how=make_decision_type
         )
 
         # Update the group's opinions after the decision has been made.
-        o = update_opinions(o, g, decision_network, how=update_opinions_type)
+        o = update_opinions(o, g, decision_matrix, how=update_opinions_type)
 
     return completed_decisions, o, groups
 
 
 def select_decision(
-    decisions, completed_decisions, decision_network, opinions, how="random"
+    decisions, completed_decisions, decision_matrix, opinions, how="random"
 ):
     """An algorithm for choosing which decision to make.
 
@@ -77,7 +77,7 @@ def select_decision(
         The list of all decisions.
     completed_decisions : list
         The list of decisions that have already been made.
-    decision_network : 2D numpy array
+    decision_matrix : 2D numpy array
         A symmetric matrix with -1, 0, and 1 elements.
         -1  indicates a contradictory relationship between decisions,
         0 indicates no relationship between decisions, and
@@ -116,7 +116,7 @@ def select_decision(
     # This randomly selects the decision proportional to the number of decisions
     # (positive or negative) to which it's connected.
     elif how == "degree":
-        d = np.sum(np.abs(decision_network), axis=0)
+        d = np.sum(np.abs(decision_matrix), axis=0)
         d = d[unmade_decisions] / np.sum(d[unmade_decisions])
         return np.random.choice(unmade_decisions, size=None, replace=True, p=d)
     else:
@@ -128,7 +128,7 @@ def select_group(
     size,
     overlap,
     decision,
-    decision_network,
+    decision_matrix,
     opinions,
     groups,
     how="random",
@@ -147,7 +147,7 @@ def select_group(
         number of bridge nodes
     decision : int
         The specific decision selected on which to decide.
-    decision_network : 2D numpy array
+    decision_matrix : 2D numpy array
         A symmetric matrix with -1, 0, and 1 elements.
         -1  indicates a contradictory relationship between decisions,
         0 indicates no relationship between decisions, and
@@ -187,23 +187,44 @@ def select_group(
 
 
 def make_decision(
-    d, decision_group, decision_network, opinions, completed_decisions, how="average"
+    cd, decision_group, decision_matrix, opinions, completed_decisions, how="average"
 ):
     # average opinions
     if how == "average":
-        return np.mean(opinions[list(decision_group), d]) > 0
+        return np.mean(opinions[list(decision_group), cd]) > 0
     if how == "star":
-        config1 = -1
-        return config1
+        stored_decisions = []
+        avg_opinions = np.mean(opinions, axis=0)
+        idx = np.where(decision_matrix[cd] != 0)
+        possible_decisions = [-1,1]
+        for d in possible_decisions:
+            ds = decision_matrix[cd] * d 
+            cost_fn = np.sum(np.abs(ds[idx] - avg_opinions[idx]))
+            stored_decisions.append(cost_fn)
+        
+        i = np.argmin(stored_decisions)
+        
+        return possible_decisions[i] # wow
     else:
         raise Exception("Invalid decision making type!")
 
 
-def update_opinions(opinions, decision_group, d, decision_network, how="average"):
+
+def update_opinions(opinions, decision_group, d, decision_matrix, how="average"):
+    """
+    parameters
+    ==========
+    how : str, default: "average"
+     - "average"
+     - "sat"
+    """
     g = sorted(decision_group)
     if how == "average":
         opinions[g, :] = np.mean(opinions[g, :])
     elif how == "sat":
+        
+        opinions[g, :] = np.mean(opinions[g, :])
+    elif how == "discrete":
         
         opinions[g, :] = np.mean(opinions[g, :])
     else:
