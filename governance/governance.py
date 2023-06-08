@@ -192,12 +192,13 @@ def select_group(
 
 def make_decision(cd, decision_group, decision_matrix, opinions, how="average"):
     # average opinions
+    g = sorted(decision_group)
     if how == "average":
-        return np.sign(np.sum(opinions[list(decision_group), cd]))
+        return np.sign(np.sum(opinions[g, cd]))
 
     if how == "star":
         cost_function = []
-        avg_opinions = np.mean(opinions, axis=0)
+        avg_opinions = np.mean(opinions[g], axis=0)
         idx = np.where(decision_matrix[cd] != 0)
         possible_decisions = [-1, 1]
         for d in possible_decisions:
@@ -214,7 +215,7 @@ def make_decision(cd, decision_group, decision_matrix, opinions, how="average"):
         raise Exception("Invalid decision making type!")
 
 
-def update_opinions(opinions, decision_group, d, decision_matrix, how="average"):
+def update_opinions(opinions, decision_group, d, cd, decision_matrix, how="average"):
     """
     parameters
     ==========
@@ -226,7 +227,7 @@ def update_opinions(opinions, decision_group, d, decision_matrix, how="average")
     if how == "average":
         opinions[g, :] = np.mean(opinions[g, :])
     elif how == "star":
-        
+
         opinions[g, :] = np.mean(opinions[g, :])
     else:
         raise Exception("Invalid opinion update type!")
