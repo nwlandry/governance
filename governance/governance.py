@@ -128,7 +128,7 @@ def select_decision(
     elif how == "snowball":
         pool = set()
         for dec in completed_decisions:
-            neigh_dec = set(np.where(decision_matrix[dec]!=0)[0])
+            neigh_dec = set(np.where(decision_matrix[dec] != 0)[0])
             pool.update(neigh_dec)
 
     else:
@@ -136,7 +136,15 @@ def select_decision(
 
 
 def select_group(
-    nodes, size, overlap, decision, decision_matrix, opinions, groups, how="star", **args
+    nodes,
+    size,
+    overlap,
+    decision,
+    decision_matrix,
+    opinions,
+    groups,
+    how="star",
+    **args
 ):
     """The algorithm for choosing the policy makers to decide on the
     selected decision.
@@ -188,7 +196,7 @@ def select_group(
         g2 = random.sample(list(nodes), num_old_nodes)
         return set(g1).union(g2)
     elif how == "star":
-        neigh_dec = np.where(decision_matrix[decision]!=0)[0].tolist()
+        neigh_dec = np.where(decision_matrix[decision] != 0)[0].tolist()
         edges = neigh_dec & groups.edges
         nodes = set()
         for group in groups.edges(edges).members():
@@ -222,9 +230,6 @@ def make_decision(cd, decision_group, decision_matrix, opinions, how="average"):
 
         i = np.argmin(cost_function)
 
-        if len(i) > 1:
-            return possible_decisions[random.choice(i)]
-
         return possible_decisions[i]  # wow
     else:
         raise Exception("Invalid decision making type!")
@@ -241,10 +246,12 @@ def update_opinions(opinions, decision_group, d, cd, decision_matrix, how="avera
     g = sorted(decision_group)
     if how == "average":
         opinions[g, :] = np.mean(opinions[g, :])
+
     elif how == "star":
         ds = decision_matrix[cd] * d
-        idx = np.where(ds!=0)
-        opinions[g,idx] = ds[idx]
+        idx = np.where(ds != 0)
+        for i in g:
+            opinions[i, idx] = ds[idx]
     else:
         raise Exception("Invalid opinion update type!")
     return opinions
