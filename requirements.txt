@@ -1,2 +1,4 @@
 numpy
 xgi
+matplotlib
+seaborn

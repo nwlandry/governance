@@ -125,15 +125,15 @@ def select_decision(
         d = d[unmade_decisions] / np.sum(d[unmade_decisions])
         return np.random.choice(unmade_decisions, size=None, replace=True, p=d)
 
-    elif how == "snowball":        
+    elif how == "snowball":
         if len(completed_decisions) == 0:
             return random.choice(list(unmade_decisions))
-        
+
         pool = set()
         for dec in completed_decisions:
             neigh_dec = set(np.where(decision_matrix[dec] != 0)[0].tolist())
             pool.update(neigh_dec)
-        
+
         possible_decisions = list(pool.intersection(unmade_decisions))
         return random.choice(possible_decisions)
 
