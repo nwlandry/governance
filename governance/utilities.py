@@ -49,13 +49,13 @@ def create_polarized_opinions(n, m, d, inform, pol):
     for i in range(n):
         if random.uniform(0, 1) < inform:  # dumb agent
             for j in range(m):
-                D[i, j] = truncated_normal(0, 0.25, [-1, 1])
+                D[i, j] = truncated_normal(0, 0.1, [-1, 1])
         elif random.uniform(0, 1) < pol:
             for j in range(m):
-                D[i, j] = truncated_normal(0.5 * d[j], 0.25, [-1, 1])
+                D[i, j] = truncated_normal(0.5 * d[j], 0.1, [-1, 1])
         else:
             for j in range(m):
-                D[i, j] = truncated_normal(-0.5 * d[j], 0.25, [-1, 1])
+                D[i, j] = truncated_normal(-0.5 * d[j], 0.1, [-1, 1])
     return D
 
 
@@ -71,20 +71,20 @@ def create_mixed_opinions(n, m, d, inform, pol):
     for i in range(n):
         if random.uniform(0, 1) < inform:  # dumb agent
             for j in range(m):
-                D[i, j] = truncated_normal(0, 0.25, [-1, 1])
+                D[i, j] = truncated_normal(0, 0.1, [-1, 1])
         elif random.uniform(0, 1) < pol:
             for j in range(m):
-                D[i, j] = truncated_normal(d[j]/maximum, 0.25, [-1, 1])
+                D[i, j] = truncated_normal(d[j]/maximum, 0.1, [-1, 1])
         else:
             for j in range(m):
-                D[i, j] = truncated_normal((1 - d[j])/maximum, 0.25, [-1, 1])
+                D[i, j] = truncated_normal((1 - d[j])/maximum, 0.1, [-1, 1])
     return D
 
 def create_incoherent_opinions(n, m, d):
     D = np.zeros((n, m))
     for i in range(n):
         for j in range(m):
-            D[i, j] = truncated_normal(d[j], 0.25, [-1, 1])
+            D[i, j] = truncated_normal(d[j], 0.1, [-1, 1])
     return D
 
 
@@ -92,11 +92,11 @@ def create_greedy_opinions(n, m, G):
     D = np.zeros((n, m))
     for i in range(n):
         for j in range(m):
-            D[i, j] = truncated_normal(0.0, 0.25, [-1, 1])
+            D[i, j] = truncated_normal(0.0, 0.1, [-1, 1])
         completed_decisions = []
         unmade_decisions = list(set(np.arange(0,m)).difference(set(completed_decisions)))
         seed = random.choice(unmade_decisions)
-        D[i,seed] = truncated_normal(0.5, 0.25, [-1, 1])
+        D[i,seed] = truncated_normal(0.5, 0.1, [-1, 1])
         completed_decisions.append(seed)
         pool = set()
         unmade_decisions = list(set(np.arange(0,m)).difference(set(completed_decisions)))
@@ -110,7 +110,7 @@ def create_greedy_opinions(n, m, G):
                     break
                 if len(possible_decisions) == 0:
                     seed = random.choice(unmade_decisions)
-                    D[i,seed] = truncated_normal(0.5, 0.25, [-1, 1])
+                    D[i,seed] = truncated_normal(0.5, 0.1, [-1, 1])
                     completed_decisions.append(seed)
                     unmade_decisions = list(set(np.arange(0,m)).difference(set(completed_decisions)))
                     if len(unmade_decisions) == 0:
@@ -131,7 +131,7 @@ def create_uniform_greedy_opinions(n, m, G):
     unmade_decisions = list(set(np.arange(0,m)).difference(set(completed_decisions)))
     seed = random.choice(unmade_decisions)
     for i in range(n):
-        D[i,seed] = truncated_normal(0.75, 0.25, [-1, 1])
+        D[i,seed] = truncated_normal(0.75, 0.1, [-1, 1])
     completed_decisions.append(seed)
     pool = set()
     unmade_decisions = list(set(np.arange(0,m)).difference(set(completed_decisions)))
@@ -149,14 +149,14 @@ def create_uniform_greedy_opinions(n, m, G):
             if len(possible_decisions) == 0:
                 seed = random.choice(unmade_decisions)
                 for i in range(n):
-                    D[i,seed] = truncated_normal(0.75, 0.25, [-1, 1])
+                    D[i,seed] = truncated_normal(0.75, 0.1, [-1, 1])
                 completed_decisions.append(seed)
                 unmade_decisions = list(set(np.arange(0,m)).difference(set(completed_decisions)))
                 if len(unmade_decisions) == 0:
                     break
             for next_dec in possible_decisions:
                 for i in range(n):
-                    D[i,next_dec] = truncated_normal(previous_dec*G[dec,next_dec]*0.75, 0.25, [-1, 1])
+                    D[i,next_dec] = truncated_normal(previous_dec*G[dec,next_dec]*0.75, 0.1, [-1, 1])
                 completed_decisions.append(next_dec)
                 unmade_decisions = list(set(np.arange(0,m)).difference(set(completed_decisions)))
                 if len(unmade_decisions) == 0:
