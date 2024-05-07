@@ -5,7 +5,7 @@ import xgi
 
 
 # optional parameters, which go in each group. Minimal number of parameters
-def decision_process(
+def governance_process(
     initial_opinions,
     decision_matrix,
     group_size,
@@ -15,27 +15,76 @@ def decision_process(
     make_decision_type="star",
     update_opinions_type="star",
 ):
+    """This implements a governance process where
+    decisions are made by stakeholders.
 
-    m = np.size(decision_matrix, axis=0)
+    Parameters
+    ----------
+    initial_opinions : numpy ndarray
+        an N x D matrix, where N is the number of nodes
+        and D is the number of decisions to be made
+    decision_matrix : numpy ndarray
+        a D x D matrix encoding the negative and
+        positive relationships (AND and XOR) between
+        decisions.
+    group_size : int >= 2
+        The size of the stakeholder groups that are making
+        the decisions
+    group_overlap : int <= group_size
+        The number of past decision makers added to a new
+        group of stakeholders
+    select_decision_type : str, optional
+        The way in which a policy issue issue to vote on is
+        chosen, by default "snowball". For more information, see `select_decision`.
+    select_group_type : str, optional
+        The way in which a group of stakeholders is chosen, by default "star".
+        For more information, see `select_group`.
+    make_decision_type : str, optional
+        The way in which a group of stakeholders decides on a policy issue,
+        by default "star". For more information, see `make_decision`.
+    update_opinions_type : str, optional
+        The way in which the nodes update their opinions about all the
+        policy issues, by default "star". For more information, see `update_opinion`.
 
+    Returns
+    -------
+    completed_decisions, opinions, groups : (dict, numpy array, xgi.Hypergraph)
+        `completed_decisions` is a dictionary where the keys are the decision
+        index and the values are -1/1, indicating voting against/for.
+        `opinions` is a numpy array with the updated opinions of all the nodes.
+        `group` is an xgi Hypergraph indicating the nodes involved in each decision
+        and the hyperedge IDs indicate the decision IDs.
+
+    Raises
+    ------
+    Exception
+        If the decision matrix isn't square or the number of opinions for each
+        node doesn't match the number of decisions.
+    """
     opinions = initial_opinions.copy()
+    n, d = opinions.shape
+    d1, d2 = decision_matrix.shape
 
-    if np.size(decision_matrix, 0) != np.size(decision_matrix, 1):
-        raise Exception("Decision matrix must be square!")
+    if d1 != d2:
+        raise Exception("The decision matrix must be square.")
 
-    if np.size(opinions, axis=1) != m:
-        raise Exception("Opinion dimension doesn't match number of decisions")
+    if d != d1:
+        raise Exception(
+            "The number of opinions for each node doesn't match the number of decisions."
+        )
 
-    n = np.size(opinions, axis=0)
+    if group_overlap > group_size:
+        raise Exception("The group size must be equal to or larger than the overlap.")
+
     nodes = np.arange(n, dtype=int)
 
     completed_decisions = dict()
-    decisions = list(range(m))
+    decisions = list(range(d))
 
     groups = xgi.Hypergraph()
-    while len(completed_decisions) < m:
+    while len(completed_decisions) < d:
         # Select the decision to make
-        cd = select_decision(
+        idx = select_decision(
             decisions,
             completed_decisions,
             decision_matrix,
@@ -48,24 +97,28 @@ def decision_process(
             nodes,
             group_size,
             group_overlap,
-            cd,
+            idx,
             decision_matrix,
             opinions,
             groups,
             how=select_group_type,
         )
 
-        groups.add_edge(g, id=cd)  # add the group to the list of all decision groups
+        groups.add_edge(g, id=idx)  # add the group to the list of all decision groups
 
         # Make the decision
-        completed_decisions[cd] = make_decision(
-            cd, g, decision_matrix, opinions, how=make_decision_type
+        completed_decisions[idx] = make_decision(
+            idx, g, decision_matrix, opinions, how=make_decision_type
         )
-        d = completed_decisions[cd]
 
         # Update the group's opinions after the decision has been made.
         opinions = update_opinions(
-            opinions, g, d, cd, decision_matrix, how=update_opinions_type
+            opinions,
+            g,
+            completed_decisions[idx],
+            idx,
+            decision_matrix,
+            how=update_opinions_type,
         )
 
     return completed_decisions, opinions, groups
@@ -95,14 +148,23 @@ def select_decision(
     how : str, default: "random"
         The method for choosing the decision to make. Options are
 
-        - "random"
-        - "sentiment"
-        - "degree"
+        - "random": choose the policy issue uniformly at random
+        - "sentiment": choose the policy issue at random proportional to the
+        the absolute value of the sentiment averaged over the population.
+        - "degree": choose the policy issue proportional to the number of
+        other policy issues to which it is connected.
+        - "snowball": choose the policy issues uniformly at random from a list of
+        decisions adjacent to all the decisions that have already been made.
 
     Returns
     -------
     int
         the decision to be made
+    
+    Raises
+    ------
+    Exception
+        if an invalid decision type is made
     """
     unmade_decisions = list(set(decisions).difference(set(completed_decisions.keys())))
 
