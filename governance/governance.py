@@ -1,3 +1,8 @@
+"""
+This module implements all the functionality necessary to simulate a governance
+process as described in
+"Governance as a complex, networked, democratic, satisfiability problem"
+"""
 import random
 
 import numpy as np

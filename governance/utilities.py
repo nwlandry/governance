@@ -1,3 +1,8 @@
+"""
+This module implements methods for generating random opinions
+according to several distributions and methods as well as other
+auxiliary methods.
+"""
 import math
 import random
 
@@ -5,6 +10,20 @@ import numpy as np
 
 
 def decisions_to_array(decisions):
+    """Converting a dictionary of decisions into a numpy array
+
+    Parameters
+    ----------
+    decisions : dict
+        A dictionary with keys as decision IDs and values of -1 or 1 representing
+        for/against the decision.
+
+    Returns
+    -------
+    numpy ndarray
+        A 1D array of size D indicating the votes for/against each policy,
+        encoded as -1, 1.
+    """
     n = len(decisions)
     d = np.zeros(n)
     for key, val in decisions.items():
@@ -16,19 +35,48 @@ def decisions_to_array(decisions):
 
 
 def create_random_opinions(n, m):
+    """Generate opinions on each policy issue for each person.
+
+    Opinions are generated uniformly at random on [-1, 1]
+
+    Parameters
+    ----------
+    n : int
+        number of individuals
+    m : int
+        number of policy issues
+
+    Returns
+    -------
+    numpy ndarray
+        An N x D array where the i,jth entry indicates the sentiment
+        of the ith individual on the jth policy issue.
+    """
     D = np.zeros((n, m))
     for i in range(n):
         for j in range(m):
-            # D[i, j] = random.choice([-1, 0, 1])
             D[i, j] = random.uniform(-1, 1)
-            # if random.uniform(0, 1) > 0.4:
-            #    D[i, j] = random.uniform(0, 1)
-            # else:
-            #    D[i, j] = random.uniform(-1, 0)
     return D
 
 
 def truncated_normal(mean, std, bounds):
+    """A truncated normal distribution
+
+    Parameters
+    ----------
+    mean : float
+        The mean of the distribution
+    std : float > 0
+        The standard deviation
+    bounds : list of size 2
+        The first entry indicates the left boundary and
+        the second entry indicates the right boundary.
+
+    Returns
+    -------
+    float
+        A sample from the truncated normal distribution.
+    """
     x = np.random.normal(mean, std)
     while x <= bounds[0] or x >= bounds[1]:
         x = np.random.normal(mean, std)
