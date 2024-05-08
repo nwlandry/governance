@@ -4,12 +4,15 @@ import random
 import numpy as np
 
 
-def create_decision_matrix(m):
-    D = np.zeros((m, m))
-    for i in range(m):
-        for j in range(i):
-            D[j, i] = D[i, j] = random.choice([-1, 0, 1])
-    return D
+def decisions_to_array(decisions):
+    n = len(decisions)
+    d = np.zeros(n)
+    for key, val in decisions.items():
+        if val == 1:
+            d[key] = 1
+        else:
+            d[key] = -1
+    return d
 
 
 def create_random_opinions(n, m):
@@ -23,17 +26,6 @@ def create_random_opinions(n, m):
             # else:
             #    D[i, j] = random.uniform(-1, 0)
     return D
-
-
-def decisions_to_array(decisions):
-    n = len(decisions)
-    d = np.zeros(n)
-    for key, val in decisions.items():
-        if val == 1:
-            d[key] = 1
-        else:
-            d[key] = -1
-    return d
 
 
 def truncated_normal(mean, std, bounds):
