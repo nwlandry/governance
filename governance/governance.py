@@ -84,7 +84,7 @@ def governance_process(
     groups = xgi.Hypergraph()
     while len(completed_decisions) < d:
         # Select the decision to make
-        idx = select_decision(
+        decision = select_decision(
             decisions,
             completed_decisions,
             decision_matrix,
@@ -97,26 +97,28 @@ def governance_process(
             nodes,
             group_size,
             group_overlap,
-            idx,
+            decision,
             decision_matrix,
             opinions,
             groups,
             how=select_group_type,
         )
 
-        groups.add_edge(g, id=idx)  # add the group to the list of all decision groups
+        groups.add_edge(
+            g, id=decision
+        )  # add the group to the list of all decision groups
 
         # Make the decision
-        completed_decisions[idx] = make_decision(
-            idx, g, decision_matrix, opinions, how=make_decision_type
+        choice = make_decision(
+            decision, g, decision_matrix, opinions, how=make_decision_type
         )
-
+        completed_decisions[decision]
         # Update the group's opinions after the decision has been made.
         opinions = update_opinions(
             opinions,
             g,
-            completed_decisions[idx],
-            idx,
+            choice,
+            decision,
             decision_matrix,
             how=update_opinions_type,
         )
@@ -160,7 +162,7 @@ def select_decision(
     -------
     int
         the decision to be made
-    
+
     Raises
     ------
     Exception
@@ -204,15 +206,7 @@ def select_decision(
 
 
 def select_group(
-    nodes,
-    size,
-    overlap,
-    decision,
-    decision_matrix,
-    opinions,
-    groups,
-    how="star",
-    **args
+    size, overlap, decision, decision_matrix, opinions, groups, how="star", **args
 ):
     """The algorithm for choosing the policy makers to decide on the
     selected decision.
@@ -241,9 +235,13 @@ def select_group(
         A hypergraph tabulating all the past decision makers and decisions.
     how : str, default: "random"
         The method for choosing the policy makers for the selected decision. Options are
-        - "random"
-        - "sentiment"
-        - "degree"
+
+        - "random": Choose both the new policy makers uniformly at random and choose
+        the overlapping policy makers uniformly at random from the list of prior decision
+        makers
+        - "star": Choose new policy makers uniformly at random and overlapping policy makers
+        uniformly at random from the list of decision makers who have decided on policies affected
+        by/affecting this policy.
 
     Returns
     -------
@@ -251,75 +249,147 @@ def select_group(
         the policy makers to decide on the selected decision.
     """
     if how == "random":
-        nodes = groups.nodes
+        old_nodes = groups.nodes
         n = np.size(opinions, axis=0)
-        new_nodes = set(range(n)).difference(nodes)
-        # non-overlapping nodes: I had to take care of edge cases
+        new_nodes = set(range(n)).difference(old_nodes)
+
+        # edge cases:
         # (1) where there are no policy makers to begin with and
         # (2) where no policy makers have been absent from all decisions
-        num_old_nodes = min(overlap, len(nodes))
-        # assuming new_nodes is always a big enough population
+        num_old_nodes = min(overlap, len(old_nodes))
         num_new_nodes = min(size - num_old_nodes, len(new_nodes))
+
         g1 = random.sample(list(new_nodes), num_new_nodes)
-        g2 = random.sample(list(nodes), num_old_nodes)
+        g2 = random.sample(list(old_nodes), num_old_nodes)
         return set(g1).union(g2)
     elif how == "star":
         neigh_dec = np.where(decision_matrix[decision] != 0)[0].tolist()
+
+        # completed decisions affected by/affecting this one
         edges = neigh_dec & groups.edges
-        nodes = set()
+        old_nodes = set()
+
+        # get all the policy makers from those decisions
         for group in groups.edges(edges).members():
-            nodes.update(group)
+            old_nodes.update(group)
         n = np.size(opinions, axis=0)
-        # assuming new_nodes is always a big enough population
-        new_nodes = set(range(n)).difference(nodes)
-        num_old_nodes = min(overlap, len(nodes))
+
+        # handling the edge cases as before
+        new_nodes = set(range(n)).difference(old_nodes)
+        num_old_nodes = min(overlap, len(old_nodes))
         num_new_nodes = min(size - num_old_nodes, len(new_nodes))
+
         g1 = random.sample(list(new_nodes), num_new_nodes)
-        g2 = random.sample(list(nodes), num_old_nodes)
+        g2 = random.sample(list(old_nodes), num_old_nodes)
         return set(g1).union(g2)
     else:
         raise Exception("Invalid group selection type!")
 
 
-def make_decision(cd, decision_group, decision_matrix, opinions, how="average"):
+def make_decision(decision, decision_group, decision_matrix, opinions, how="average"):
+    """The method by which a group of policy makers votes for/against a policy.
+
+    Parameters
+    ----------
+    decision : int
+        The decision index
+    decision_group : set
+        The list of policy makers making the decision
+    decision_matrix : numpy ndarray
+        A D x D matrix encoding the relationships between decisions.
+    opinions : numpy nd arrray
+        An N x D matrix of the opinions that each policy maker holds
+        on each of the policies.
+    how : str, optional
+        The method by which the decision is made, by default "average".
+        Current choices are:
+
+        - "average": returns the sign of the average group sentiment
+        - "star": minimizes the average dissatisfaction across the decision
+        and coherent related decisions.
+
+    Returns
+    -------
+    int
+        -1 if voting against the policy, 1 if voting for the policy.
+
+    Raises
+    ------
+    Exception
+        If invalid decision making type is chosen.
+    """
     # average opinions
     g = sorted(decision_group)
     if how == "average":
-        return np.sign(np.sum(opinions[g, cd]))
+        return np.sign(opinions[g, decision].sum())
 
     if how == "star":
         cost_function = []
-        avg_opinions = np.mean(opinions[g], axis=0)
-        idx = np.where(decision_matrix[cd] != 0)
+        # calculate the average opinion of the group.
+        avg_opinions = opinions[g].mean(axis=0)
+
+        # find related decisions
+        idx = np.where(decision_matrix[decision] != 0)
         possible_decisions = [-1, 1]
         for d in possible_decisions:
-            ds = decision_matrix[cd] * d
+            ds = decision_matrix[decision] * d
+
+            # calculate the dissatisfaction across the decision and all
+            # (coherent) related decisions.
             cost_function.append(np.sum(np.abs(ds[idx] - avg_opinions[idx])))
 
+        # minimize the dissatisfaction
         i = np.argmin(cost_function)
 
-        return possible_decisions[i]  # wow
+        return possible_decisions[i]
     else:
         raise Exception("Invalid decision making type!")
 
 
-def update_opinions(opinions, decision_group, d, cd, decision_matrix, how="average"):
-    """
-    parameters
-    ==========
-    how : str, default: "average"
-     - "average"
-     - "sat"
+def update_opinions(
+    opinions, decision_group, choice, decision, decision_matrix, how="average"
+):
+    """The method by which stakeholders update their opinions after making a decision
+
+    Parameters
+    ----------
+    opinions : numpy nd arrray
+        An N x D matrix of the opinions that each policy maker holds
+        on each of the policies.
+    decision_group : set
+        The list of policy makers making the decision
+    choice : int
+        -1 if decided against the policy, `1 if decided for it
+    decision : int
+        the index of the decision
+    decision_matrix : numpy ndarray
+        A D x D matrix encoding the relationship between decisions.
+    how : str, optional
+        The method by which the nodes update their opinions, by default "average"
+
+    Returns
+    -------
+    numpy ndarray
+        An N x D matrix with the updated opinions of all nodes on all policy
+        decisions.
+
+    Raises
+    ------
+    Exception
+        If an invalid updating method is described.
     """
     g = sorted(decision_group)
     if how == "average":
         opinions[g, :] = np.mean(opinions[g, :])
 
     elif how == "star":
-        ds = decision_matrix[cd] * d
+        ds = decision_matrix[decision] * choice
         idx = np.where(ds != 0)
         for i in g:
-            opinions[i, idx] = ds[idx]
+            # update the opinions in the group of stakeholders
+            # to match the decision made and be coherent with the
+            # related decisions as well.
+            opinions[i, idx] = ds[decision]
     else:
         raise Exception("Invalid opinion update type!")
     return opinions
