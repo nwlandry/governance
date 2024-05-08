@@ -84,6 +84,26 @@ def truncated_normal(mean, std, bounds):
 
 
 def create_polarized_opinions(n, m, d, inform, pol):
+    """_summary_
+
+    Parameters
+    ----------
+    n : _type_
+        _description_
+    m : _type_
+        _description_
+    d : _type_
+        _description_
+    inform : _type_
+        _description_
+    pol : _type_
+        _description_
+
+    Returns
+    -------
+    _type_
+        _description_
+    """
     D = np.zeros((n, m))
     for i in range(n):
         if random.uniform(0, 1) < inform:  # dumb agent
@@ -99,6 +119,26 @@ def create_polarized_opinions(n, m, d, inform, pol):
 
 
 def create_mixed_opinions(n, m, d, inform, pol):
+    """_summary_
+
+    Parameters
+    ----------
+    n : _type_
+        _description_
+    m : _type_
+        _description_
+    d : _type_
+        _description_
+    inform : _type_
+        _description_
+    pol : _type_
+        _description_
+
+    Returns
+    -------
+    _type_
+        _description_
+    """
     D = np.zeros((n, m))
     maximum = 1.0
     for j in range(m):
@@ -121,6 +161,22 @@ def create_mixed_opinions(n, m, d, inform, pol):
 
 
 def create_incoherent_opinions(n, m, d):
+    """_summary_
+
+    Parameters
+    ----------
+    n : _type_
+        _description_
+    m : _type_
+        _description_
+    d : _type_
+        _description_
+
+    Returns
+    -------
+    _type_
+        _description_
+    """
     D = np.zeros((n, m))
     for i in range(n):
         for j in range(m):
@@ -129,6 +185,22 @@ def create_incoherent_opinions(n, m, d):
 
 
 def create_greedy_opinions(n, m, G):
+    """_summary_
+
+    Parameters
+    ----------
+    n : _type_
+        _description_
+    m : _type_
+        _description_
+    G : _type_
+        _description_
+
+    Returns
+    -------
+    _type_
+        _description_
+    """
     D = np.zeros((n, m))
     for i in range(n):
         for j in range(m):
@@ -176,6 +248,22 @@ def create_greedy_opinions(n, m, G):
 
 
 def create_uniform_greedy_opinions(n, m, G):
+    """_summary_
+
+    Parameters
+    ----------
+    n : _type_
+        _description_
+    m : _type_
+        _description_
+    G : _type_
+        _description_
+
+    Returns
+    -------
+    _type_
+        _description_
+    """
     D = np.zeros((n, m))
     completed_decisions = []
     unmade_decisions = list(set(np.arange(0, m)).difference(set(completed_decisions)))
