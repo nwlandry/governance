@@ -99,7 +99,6 @@ def governance_process(
 
         # Select the group to make that decision
         g = select_group(
-            nodes,
             group_size,
             group_overlap,
             decision,
@@ -108,7 +107,6 @@ def governance_process(
             groups,
             how=select_group_type,
         )
-
         groups.add_edge(
             g, id=decision
         )  # add the group to the list of all decision groups
@@ -117,7 +115,7 @@ def governance_process(
         choice = make_decision(
             decision, g, decision_matrix, opinions, how=make_decision_type
         )
-        completed_decisions[decision]
+        completed_decisions[decision] = choice
         # Update the group's opinions after the decision has been made.
         opinions = update_opinions(
             opinions,

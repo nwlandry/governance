@@ -84,25 +84,37 @@ def truncated_normal(mean, std, bounds):
 
 
 def create_polarized_opinions(n, m, d, inform, pol):
-    """_summary_
+    """Generate polarized opinions for each person.
+
+    1. with probability `inform` the person has an opinion
+    drawn from a normal distribution centered at 0, i.e.,
+    an uninformed agent.
+    2. An informed agent is polarized towards opinion 1 with
+    probability `pol` and is then drawn from a normal distribution
+    centered at 0.5
+    2. An informed agent is polarized towards opinion -1 with
+    probability `1-pol` and is then drawn from a normal distribution
+    centered at -0.5
+
+    ** Note that all normal distributions are truncated to [-1, 1].
 
     Parameters
     ----------
-    n : _type_
+    n : int
+        Number of agents
+    m : int
+        number of issues
+    d : numpy array
         _description_
-    m : _type_
-        _description_
-    d : _type_
-        _description_
-    inform : _type_
-        _description_
-    pol : _type_
-        _description_
+    inform : float between 0 and 1
+        probability of an uninformed agent
+    pol : float between 0 and 1
+        probability of polarization toward opinion 1
 
     Returns
     -------
-    _type_
-        _description_
+    numpy array
+        an n x m matrix of opinions for each agent
     """
     D = np.zeros((n, m))
     for i in range(n):
