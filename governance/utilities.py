@@ -138,10 +138,10 @@ def create_mixed_opinions(n, m, d, inform, pol):
     an uninformed agent.
     2. An informed agent is polarized towards opinion 1 with
     probability `pol` and is then drawn from a normal distribution
-    centered at 0.5
+    centered at a value normalized by the maximum possible sentiment.
     2. An informed agent is polarized towards opinion -1 with
     probability `1-pol` and is then drawn from a normal distribution
-    centered at -0.5
+    centered at a value normalized by the maximum possible sentiment.
 
     ** Note that all normal distributions are truncated to [-1, 1].
 
@@ -218,7 +218,10 @@ def create_incoherent_opinions(n, m, d):
 
 
 def create_greedy_opinions(n, m, G):
-    """Create greedy opionions for each person.
+    """Create greedy opinions for each person.
+
+    This works by selecting a seed node (person)
+    at random and then 
 
     Parameters
     ----------
@@ -231,7 +234,7 @@ def create_greedy_opinions(n, m, G):
 
     Returns
     -------
-    numpy array
+    D : numpy array
         an n x m matrix of opinions for each agent
     """
     D = np.zeros((n, m))
