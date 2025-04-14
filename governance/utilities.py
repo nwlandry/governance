@@ -84,25 +84,37 @@ def truncated_normal(mean, std, bounds):
 
 
 def create_polarized_opinions(n, m, d, inform, pol):
-    """_summary_
+    """Generate polarized opinions for each person.
+
+    1. with probability `inform` the person has an opinion
+    drawn from a normal distribution centered at 0, i.e.,
+    an uninformed agent.
+    2. An informed agent is polarized towards opinion 1 with
+    probability `pol` and is then drawn from a normal distribution
+    centered at 0.5
+    2. An informed agent is polarized towards opinion -1 with
+    probability `1-pol` and is then drawn from a normal distribution
+    centered at -0.5
+
+    ** Note that all normal distributions are truncated to [-1, 1].
 
     Parameters
     ----------
-    n : _type_
-        _description_
-    m : _type_
-        _description_
-    d : _type_
-        _description_
-    inform : _type_
-        _description_
-    pol : _type_
-        _description_
+    n : int
+        Number of agents
+    m : int
+        number of issues
+    d : numpy array
+        a list of decision outcomes (entries of -1 and 1)
+    inform : float between 0 and 1
+        probability of an uninformed agent
+    pol : float between 0 and 1
+        probability of polarization toward opinion 1
 
     Returns
     -------
-    _type_
-        _description_
+    numpy array
+        an n x m matrix of opinions for each agent
     """
     D = np.zeros((n, m))
     for i in range(n):
@@ -119,25 +131,37 @@ def create_polarized_opinions(n, m, d, inform, pol):
 
 
 def create_mixed_opinions(n, m, d, inform, pol):
-    """_summary_
+    """Generate mixed opinions for each person.
+
+    1. with probability `inform` the person has an opinion
+    drawn from a normal distribution centered at 0, i.e.,
+    an uninformed agent.
+    2. An informed agent is polarized towards opinion 1 with
+    probability `pol` and is then drawn from a normal distribution
+    centered at a value normalized by the maximum possible sentiment.
+    2. An informed agent is polarized towards opinion -1 with
+    probability `1-pol` and is then drawn from a normal distribution
+    centered at a value normalized by the maximum possible sentiment.
+
+    ** Note that all normal distributions are truncated to [-1, 1].
 
     Parameters
     ----------
-    n : _type_
-        _description_
-    m : _type_
-        _description_
-    d : _type_
-        _description_
-    inform : _type_
-        _description_
-    pol : _type_
-        _description_
+    n : int
+        Number of agents
+    m : int
+        number of issues
+    d : numpy array
+        a list of decision outcomes (entries of -1 and 1)
+    inform : float between 0 and 1
+        probability of an uninformed agent
+    pol : float between 0 and 1
+        probability of polarization toward opinion 1
 
     Returns
     -------
-    _type_
-        _description_
+    numpy array
+        an n x m matrix of opinions for each agent
     """
     D = np.zeros((n, m))
     maximum = 1.0
@@ -161,21 +185,30 @@ def create_mixed_opinions(n, m, d, inform, pol):
 
 
 def create_incoherent_opinions(n, m, d):
-    """_summary_
+    """Generate incoherent opinions for each person.
+
+    Agent opinions are drawn from a normal distribution
+    centered at the desired decision.
+
+    ** Note that all normal distributions are truncated to [-1, 1].
 
     Parameters
     ----------
-    n : _type_
-        _description_
-    m : _type_
-        _description_
-    d : _type_
-        _description_
+    n : int
+        Number of agents
+    m : int
+        number of issues
+    d : numpy array
+        a list of decision outcomes (entries of -1 and 1)
+    inform : float between 0 and 1
+        probability of an uninformed agent
+    pol : float between 0 and 1
+        probability of polarization toward opinion 1
 
     Returns
     -------
-    _type_
-        _description_
+    numpy array
+        an n x m matrix of opinions for each agent
     """
     D = np.zeros((n, m))
     for i in range(n):
@@ -185,21 +218,24 @@ def create_incoherent_opinions(n, m, d):
 
 
 def create_greedy_opinions(n, m, G):
-    """_summary_
+    """Create greedy opinions for each person.
+
+    This works by selecting a seed node (person)
+    at random and then 
 
     Parameters
     ----------
-    n : _type_
-        _description_
-    m : _type_
-        _description_
-    G : _type_
-        _description_
+    n : int
+        Number of agents
+    m : int
+        Number of issues
+    G : Numpy 2D array
+        The decision matrix
 
     Returns
     -------
-    _type_
-        _description_
+    D : numpy array
+        an n x m matrix of opinions for each agent
     """
     D = np.zeros((n, m))
     for i in range(n):
@@ -248,21 +284,21 @@ def create_greedy_opinions(n, m, G):
 
 
 def create_uniform_greedy_opinions(n, m, G):
-    """_summary_
+    """Create greedy opionions for each person.
 
     Parameters
     ----------
-    n : _type_
-        _description_
-    m : _type_
-        _description_
-    G : _type_
-        _description_
+    n : int
+        Number of agents
+    m : int
+        Number of issues
+    G : Numpy 2D array
+        The decision matrix
 
     Returns
     -------
-    _type_
-        _description_
+    numpy array
+        an n x m matrix of opinions for each agent
     """
     D = np.zeros((n, m))
     completed_decisions = []
